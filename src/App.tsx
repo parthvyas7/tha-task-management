@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RxCross1 } from "react-icons/rx";
 import { CiSearch } from "react-icons/ci";
 import useDebounce from "./hooks/useDebounce";
@@ -20,10 +20,8 @@ const App: React.FC = () => {
     const savedTasks = localStorage.getItem("tasks");
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
-  const inputRef = useRef(null);
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
-    inputRef.current?.focus();
   }, [tasks]);
   const [task, setTask] = useState<Task>({
     id: Math.random().toString(36).slice(2, 9),
@@ -86,10 +84,10 @@ const App: React.FC = () => {
     }
   };
   const handleDelete = (id: string) => {
-    const userConfirmation = confirm(
-      "Are you sure you want to delete this task?"
-    );
-    if (userConfirmation) {
+    // const userConfirmation = confirm(
+    //   "Are you sure you want to delete this task?"
+    // );
+    if (true) {
       setTasks(tasks.filter((task) => task.id !== id));
     }
   };
@@ -146,6 +144,9 @@ const App: React.FC = () => {
         </div>
         <div className="my-2">
           <ul className="overflow-y-auto max-h-96">
+            {segregatedTasks.length === 0 ? (
+              <p className="text-lg">No tasks added</p>
+            ) : null}
             {segregatedTasks.map((task) => (
               <>
                 <li
@@ -184,7 +185,6 @@ const App: React.FC = () => {
               onChange={handleAddTaskInputChange}
               onKeyDown={handleKeyPress}
               required
-              ref={inputRef}
             />
             <Button
               onClick={handleAddTask}

@@ -4,11 +4,12 @@ Basic task management application where users can: Add a task, Mark a task as co
 
 # Demo
 
-[Visit]()
+[Visit](https://parthvyas7.github.io/tha-task-management/)
 
 ## Screenshots
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Screenshot](./app-web.webp)
+![App Screenshot](./app-mobile.webp)
 
 ## Run Locally
 
