@@ -2,20 +2,26 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useEffect,useCallback } from "react";
 import { RxCross1 } from "react-icons/rx";
 import { CiSearch } from "react-icons/ci";
-
+import useDebounce from './hooks/useDebounce'
 interface Task {
   id: string;
   content: string;
   complete: boolean;
 }
 
-type Filter = "all" | "complete" | "incomplete";
+type FilterType = "all" | "complete" | "incomplete";
 
 const App: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const savedTasks = localStorage.getItem("tasks");
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
   const [task, setTask] = useState<Task>({
     id: Math.random().toString(36).slice(2, 9),
     content: "",
@@ -23,7 +29,8 @@ const App: React.FC = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const debouncedSearchTerm = useDebounce<string>(searchTerm, 300);
 
   const handleAddTask = () => {
     const newTaskId = Math.random().toString(36).slice(2, 9);
@@ -33,23 +40,23 @@ const App: React.FC = () => {
     ]);
     setTask({ id: newTaskId, content: "", complete: false });
   };
+  const segregatedTasks = useCallback(() => {
+    return tasks.filter((task) => {
+      const matchesFilter =
+        filter === "all"
+          ? true
+          : filter === "complete"
+          ? task.complete
+          : filter === "incomplete"
+          ? !task.complete
+          : true;
+      const matchesSearch = task.content
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+  }, [tasks, filter, debouncedSearchTerm])();
 
-  const segregatedTasks = tasks.filter((task) => {
-    const matchesFilter =
-      filter === "all"
-        ? true
-        : filter === "complete"
-        ? task.complete
-        : filter === "incomplete"
-        ? !task.complete
-        : true;
-
-    const matchesSearch = task.content
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    return matchesFilter && matchesSearch;
-  });
   const handleSearch = (e: React.FormEvent<HTMLInputElement>) => {
     setSearchTerm(e.currentTarget.value);
   };
@@ -76,7 +83,7 @@ const App: React.FC = () => {
   return (
     <>
       <div className="mx-auto py-4">
-        <div className="flex flex-row">
+        <div className="flex flex-col md:flex-row">
           <h1 className="text-4xl">Today</h1>
           <div className="relative">
             <Input
@@ -117,7 +124,7 @@ const App: React.FC = () => {
           <ul>
             {segregatedTasks.map((task) => (
               <>
-                <li key={task.id} className="flex flex-row gap-2">
+                <li key={task.id} className="flex flex-row gap-2 rounded border">
                   <Checkbox
                     checked={task.complete}
                     onClick={() => handleComplete(task.id)}
