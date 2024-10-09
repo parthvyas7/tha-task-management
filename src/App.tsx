@@ -1,11 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "./components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect, useCallback } from "react";
-import { RxCross1 } from "react-icons/rx";
+import { useState, useCallback, useContext } from "react";
 import { CiSearch } from "react-icons/ci";
 import useDebounce from "./hooks/useDebounce";
+import TaskList from "@/components/TaskList";
+import {TasksListContext} from "./context/store";
 
 interface Task {
   id: string;
@@ -13,16 +13,23 @@ interface Task {
   complete: boolean;
 }
 
+interface TasksListContextValue {
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+}
+
 type FilterType = "all" | "complete" | "incomplete";
 
 const App: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem("tasks");
-    return savedTasks ? JSON.parse(savedTasks) : [];
-  });
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  // const [tasks, setTasks] = useState<Task[]>(() => {
+  //   const savedTasks = localStorage.getItem("tasks");
+  //   return savedTasks ? JSON.parse(savedTasks) : [];
+  // });
+  // useEffect(() => {
+  //   localStorage.setItem("tasks", JSON.stringify(tasks));
+  // }, [tasks]);
+  const { tasks, setTasks } =
+    useContext<TasksListContextValue>(TasksListContext);
   const [task, setTask] = useState<Task>({
     id: Math.random().toString(36).slice(2, 9),
     content: "",
@@ -31,8 +38,7 @@ const App: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filter, setFilter] = useState<FilterType>("all");
-  const debouncedSearchTerm = useDebounce<string>(searchTerm, 300);
-
+  const [debouncedSearchTerm, searching] = useDebounce<string>(searchTerm, 300);
   const handleAddTask = () => {
     const newTaskId = Math.random().toString(36).slice(2, 9);
     setTasks([
@@ -55,6 +61,7 @@ const App: React.FC = () => {
       const matchesSearch = task.content
         .toLowerCase()
         .includes(debouncedSearchTerm.toLowerCase());
+
       return matchesFilter && matchesSearch;
     });
   }, [tasks, filter, debouncedSearchTerm])();
@@ -75,6 +82,7 @@ const App: React.FC = () => {
       })
     );
   };
+
   const handleAddTaskInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTask({ ...task, content: e.currentTarget.value });
   };
@@ -84,13 +92,14 @@ const App: React.FC = () => {
     }
   };
   const handleDelete = (id: string) => {
-    // const userConfirmation = confirm(
-    //   "Are you sure you want to delete this task?"
-    // );
-    if (true) {
+    const userConfirmation = confirm(
+      "Are you sure you want to delete this task?"
+    );
+    if (userConfirmation) {
       setTasks(tasks.filter((task) => task.id !== id));
     }
   };
+
   const handleViewCompleted = () => setFilter("complete");
   const handleViewIncomplete = () => setFilter("incomplete");
   const handleViewAll = () => setFilter("all");
@@ -108,7 +117,11 @@ const App: React.FC = () => {
               onChange={handleSearch}
               className="rounded-full pl-10 pr-4 py-2 w-full text-lg"
             />
-            <CiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <CiSearch
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl stroke-1 ${
+                searching ? "animate-pulse" : ""
+              }`}
+            />
           </div>
           <ToggleGroup
             size={"lg"}
@@ -143,39 +156,11 @@ const App: React.FC = () => {
           </ToggleGroup>
         </div>
         <div className="my-2">
-          <ul className="overflow-y-auto max-h-96">
-            {segregatedTasks.length === 0 ? (
-              <p className="text-lg">No tasks added</p>
-            ) : null}
-            {segregatedTasks.map((task) => (
-              <>
-                <li
-                  key={task.id}
-                  className={`flex flex-row gap-2 rounded border items-center ${
-                    task.complete ? "border-green-300 bg-green-50" : null
-                  } p-2 my-2 justify-between`}
-                >
-                  <div className="space-x-2 items-center flex">
-                    <Checkbox
-                      checked={task.complete}
-                      onClick={() => handleComplete(task.id)}
-                      className={"rounded-full w-6 h-6"}
-                    />
-                    <span className={"text-lg"}>{task.content}</span>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(task.id)}
-                    className="rounded-full hover:text-red-500"
-                  >
-                    <RxCross1 />
-                  </Button>
-                </li>
-              </>
-            ))}
-          </ul>
+          <TaskList
+            segregatedTasks={segregatedTasks}
+            handleComplete={handleComplete}
+            handleDelete={handleDelete}
+          />
           <div className="space-y-2 my-2">
             <Input
               placeholder="Type something (Press Enter to add)"
