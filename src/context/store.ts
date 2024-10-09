@@ -11,4 +11,7 @@ interface TasksListContextValue {
   setTasks: (tasks: Task[]) => void;
 }
 
-export const TasksListContext = createContext<TasksListContextValue | null>(null);
+export const TasksListContext = createContext<TasksListContextValue>({
+  tasks: [],
+  setTasks: () => {},
+});

@@ -21,13 +21,6 @@ interface TasksListContextValue {
 type FilterType = "all" | "complete" | "incomplete";
 
 const App: React.FC = () => {
-  // const [tasks, setTasks] = useState<Task[]>(() => {
-  //   const savedTasks = localStorage.getItem("tasks");
-  //   return savedTasks ? JSON.parse(savedTasks) : [];
-  // });
-  // useEffect(() => {
-  //   localStorage.setItem("tasks", JSON.stringify(tasks));
-  // }, [tasks]);
   const { tasks, setTasks } =
     useContext<TasksListContextValue>(TasksListContext);
   const [task, setTask] = useState<Task>({
